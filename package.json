@@ -1,7 +1,7 @@
 {
-    "name": "node-js-package-starter",
+    "name": "magic-class",
     "version": "1.0.0",
-    "description": "To develop a Node.js package from the scratch",
+    "description": "PHP-styled magic methods for classes or instances.",
     "main": "dist/index.js",
     "exports": {
         ".": {
@@ -18,18 +18,25 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/linhntaim/node-js-package-starter.git"
+        "url": "https://github.com/linhntaim/magic-class.git"
     },
     "keywords": [
-        "package",
-        "starter"
+        "php",
+        "php-like",
+        "magic",
+        "method",
+        "methods",
+        "class",
+        "static",
+        "instance",
+        "mixin"
     ],
     "author": "Nguyen Tuan Linh <contact@linhntaim.com> (https://www.linhntaim.com)",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/linhntaim/node-js-package-starter/issues"
+        "url": "https://github.com/linhntaim/magic-class/issues"
     },
-    "homepage": "https://github.com/linhntaim/node-js-package-starter#readme",
+    "homepage": "https://github.com/linhntaim/magic-class#readme",
     "devDependencies": {
         "@babel/cli": "^7.23.0",
         "@babel/core": "^7.23.0",
@@ -40,5 +47,8 @@
         "coveralls": "^3.1.1",
         "mocha": "^10.2.0",
         "nyc": "^15.1.0"
+    },
+    "engines": {
+        "node": ">=6"
     }
 }

@@ -1,9 +1,9 @@
-# node-js-package-starter
+# magic-class
 
-[![NPM version](https://img.shields.io/npm/v/node-js-package-starter.svg?style=flat-square)](https://www.npmjs.com/package/node-js-package-starter)
-[![Travis (.org)](https://img.shields.io/travis/com/linhntaim/node-js-package-starter?style=flat-square)](https://app.travis-ci.com/github/linhntaim/node-js-package-starter)
-[![Coveralls github](https://img.shields.io/coveralls/github/linhntaim/node-js-package-starter?style=flat-square)](https://coveralls.io/github/linhntaim/node-js-package-starter)
-[![NPM](https://img.shields.io/npm/l/node-js-package-starter?style=flat-square)](https://github.com/linhntaim/node-js-package-starter/blob/master/LICENSE)
+[![NPM version](https://img.shields.io/npm/v/magic-class.svg?style=flat-square)](https://www.npmjs.com/package/magic-class)
+[![Travis (.org)](https://img.shields.io/travis/com/linhntaim/magic-class?style=flat-square)](https://app.travis-ci.com/github/linhntaim/magic-class)
+[![Coveralls github](https://img.shields.io/coveralls/github/linhntaim/magic-class?style=flat-square)](https://coveralls.io/github/linhntaim/magic-class)
+[![NPM](https://img.shields.io/npm/l/magic-class?style=flat-square)](https://github.com/linhntaim/magic-class/blob/master/LICENSE)
 
 Description.
 
@@ -19,7 +19,7 @@ Description.
 ## Installation
 
 ```bash
-npm install node-js-package-starter
+npm install magic-class --save
 ```
 
 ## Usage
