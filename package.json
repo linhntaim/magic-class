@@ -1,7 +1,7 @@
 {
     "name": "magic-class",
     "version": "1.0.0",
-    "description": "PHP-styled magic methods for classes or instances.",
+    "description": "PHP-like magic methods for classes or instances.",
     "main": "dist/index.js",
     "exports": {
         ".": {
