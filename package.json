@@ -1,7 +1,7 @@
 {
     "name": "magic-class",
     "version": "1.0.0",
-    "description": "Activate PHP-like magic methods in classes and instances.",
+    "description": "Activate PHP-like magic methods in Javascript classes and instances.",
     "main": "dist/index.js",
     "exports": {
         ".": {
