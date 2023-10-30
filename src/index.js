@@ -8,6 +8,21 @@ function magicInstance(instance, strict) {
     let instanceProxy
 
     const handler = {
+        set(target, p, newValue) {
+            if (Reflect.has(instance, p)) {
+                return Reflect.set(instance, p, newValue, instanceProxy)
+            }
+
+            const setter = Reflect.get(instance, '__set')
+            if (typeof setter === 'function') {
+                return Reflect.apply(setter, instanceProxy, [p, newValue]) ?? true
+            }
+
+            if (strict) {
+                throw new ReferenceError(`Property [${p}] does not exist.`)
+            }
+            return Reflect.set(instance, p, newValue, instanceProxy)
+        },
         get(target, p) {
             if (Reflect.has(instance, p)) {
                 return Reflect.get(instance, p, instanceProxy)
@@ -34,69 +49,66 @@ function magicInstance(instance, strict) {
             }
             return undefined
         },
-        set(target, p, newValue) {
-            if (Reflect.has(instance, p)) {
-                return Reflect.set(instance, p, newValue, instanceProxy)
-            }
-
-            const setter = Reflect.get(instance, '__set')
-            if (typeof setter === 'function') {
-                return Reflect.apply(setter, instanceProxy, [p, newValue]) ?? true
-            }
-
-            if (strict) {
-                throw new ReferenceError(`Property [${p}] does not exist.`)
-            }
-            return Reflect.set(instance, p, newValue, instanceProxy)
-        },
         has(target, p) {
             if (Reflect.has(instance, p)) {
                 return true
             }
 
-            const caller = Reflect.get(instance, '__call')
-            if (typeof caller === 'function') {
-                return true
-            }
-
-            const getter = Reflect.get(instance, '__get')
-            if (typeof getter === 'function') {
-                if (Reflect.apply(getter, instanceProxy, [p]) !== undefined) {
-                    return true
-                }
+            const has = Reflect.get(instance, '__has')
+            if (typeof has === 'function') {
+                return Reflect.apply(has, instanceProxy, [p]) ?? false
             }
 
             return false
         },
         deleteProperty(target, p) {
-            if (strict) {
-                throw new TypeError(`Cannot delete property [${p}]`)
-            }
-
             if (Reflect.has(instance, p)) {
+                if (strict) {
+                    throw new TypeError(`Cannot delete property [${p}].`)
+                }
                 return Reflect.deleteProperty(instance, p)
             }
 
-            // TODO: should implement magic delete ??
+            const deleter = Reflect.get(instance, '__delete')
+            if (typeof deleter === 'function') {
+                return Reflect.apply(deleter, instanceProxy, [p]) ?? true
+            }
 
             return true
+        },
+        setPrototypeOf(target, v) {
+            throw new TypeError('Cannot change prototype of the instance.')
         },
         getPrototypeOf() {
             return Reflect.getPrototypeOf(instance)
         },
+        defineProperty(target, property, attributes) {
+            return Reflect.defineProperty(instance, property, attributes)
+        },
+        getOwnPropertyDescriptor(target, p) {
+            return Reflect.getOwnPropertyDescriptor(instance, p)
+        },
+        ownKeys() {
+            return Reflect.ownKeys(instance)
+        },
+        preventExtensions() {
+            return Reflect.preventExtensions(instance)
+        },
+        isExtensible() {
+            return Reflect.isExtensible(instance)
+        },
     }
 
     const invoke = Reflect.get(instance, '__invoke')
-    if (typeof invoke === 'function') {
-        return instanceProxy = new Proxy(invoke, {
+
+    return instanceProxy = typeof invoke === 'function'
+        ? new Proxy(invoke, {
             apply(target, thisArg, argArray) {
                 return Reflect.apply(invoke, instanceProxy, argArray)
             },
             ...handler,
         })
-    }
-
-    return instanceProxy = new Proxy(instance, handler)
+        : new Proxy(instance, handler)
 }
 
 function magicClass(Class, strict) {
@@ -130,10 +142,23 @@ function magicClass(Class, strict) {
         construct(target, argArray, newTarget) {
             return InstanceFactory.getInstanceProxy(argArray, newTarget)
         },
+        set(target, p, newValue) {
+            if (Reflect.has(Class, p)) {
+                return Reflect.set(Class, p, newValue, ClassProxy)
+            }
+
+            const setter = Reflect.get(Class, '__set')
+            if (typeof setter === 'function') {
+                return Reflect.apply(setter, ClassProxy, [p, newValue]) ?? true
+            }
+
+            if (strict) {
+                throw new ReferenceError(`Static property [${p}] does not exist.`)
+            }
+            return Reflect.set(Class, p, newValue, ClassProxy)
+        },
         get(target, p) {
             switch (p) {
-                case '__static':
-                    return ClassProxy
                 case '__instance':
                     return (...constructParams) => InstanceFactory.getInstance(...constructParams)
                 case '__singleton':
@@ -165,112 +190,71 @@ function magicClass(Class, strict) {
                     return undefined
             }
         },
-        set(target, p, newValue) {
-            if (Reflect.has(Class, p)) {
-                return Reflect.set(Class, p, newValue, ClassProxy)
-            }
-
-            const setter = Reflect.get(Class, '__set')
-            if (typeof setter === 'function') {
-                return Reflect.apply(setter, ClassProxy, [p, newValue]) ?? true
-            }
-
-            if (strict) {
-                throw new ReferenceError(`Static property [${p}] does not exist.`)
-            }
-            return Reflect.set(Class, p, newValue, ClassProxy)
-        },
         has(target, p) {
             if (Reflect.has(Class, p)) {
                 return true
             }
 
-            if (['__static', '__instance', '__singleton'].includes(p)) {
+            if (['__instance', '__singleton'].includes(p)) {
                 return true
             }
 
-            const caller = Reflect.get(Class, '__call')
-            if (typeof caller === 'function') {
-                return true
-            }
-
-            const getter = Reflect.get(Class, '__get')
-            if (typeof getter === 'function') {
-                if (Reflect.apply(getter, ClassProxy, [p]) !== undefined) {
-                    return true
-                }
+            const has = Reflect.get(Class, '__has')
+            if (typeof has === 'function') {
+                return Reflect.apply(has, ClassProxy, [p]) ?? false
             }
 
             return false
         },
         deleteProperty(target, p) {
-            if (strict || ['__static', '__instance', '__singleton'].includes(p)) {
-                throw new TypeError(`Cannot delete static property [${p}]`)
-            }
-
             if (Reflect.has(Class, p)) {
+                if (strict) {
+                    throw new TypeError(`Cannot delete static property [${p}].`)
+                }
                 return Reflect.deleteProperty(Class, p)
             }
 
-            // TODO: should implement magic delete ??
+            if (['__instance', '__singleton'].includes(p)) {
+                throw new TypeError(`Cannot delete static property [${p}].`)
+            }
+
+            const deleter = Reflect.get(Class, '__delete')
+            if (typeof deleter === 'function') {
+                return Reflect.apply(deleter, ClassProxy, [p]) ?? true
+            }
 
             return true
+        },
+        setPrototypeOf(target, v) {
+            throw new TypeError(`Cannot change prototype of the class [${Class.name}].`)
         },
         getPrototypeOf() {
             return Reflect.getPrototypeOf(Class)
         },
+        defineProperty(target, property, attributes) {
+            return Reflect.defineProperty(Class, property, attributes)
+        },
+        getOwnPropertyDescriptor(target, p) {
+            return Reflect.getOwnPropertyDescriptor(Class, p)
+        },
+        ownKeys() {
+            return Reflect.ownKeys(Class)
+        },
+        preventExtensions() {
+            return Reflect.preventExtensions(Class)
+        },
+        isExtensible() {
+            return Reflect.isExtensible(Class)
+        },
     })
 }
 
-export function magic(target, strict = true) {
+export default function magic(target, strict = true) {
+    if (typeof target === 'function') {
+        return magicClass(target, strict)
+    }
     if (target !== null && typeof target === 'object') {
         return magicInstance(target, strict)
     }
-    if (typeof target !== 'function') {
-        throw new TypeError('The [target] parameter must be a function or an object.')
-    }
-    return magicClass(target, strict)
-}
-
-export const MagicMixin = (Class, strict = true) => class extends Class
-{
-    static ___magic
-
-    static {
-        this.___magic = magic(this, strict)
-    }
-
-    static get __static() {
-        return this.___magic
-    }
-
-    static __instance(...constructParams) {
-        return this.__static.__instance(...constructParams)
-    }
-
-    static __singleton(...constructParams) {
-        return this.__static.__singleton(...constructParams)
-    }
-}
-
-export class MagicClass
-{
-    static ___magic
-
-    static get __static() {
-        return this.___magic
-    }
-
-    static __instance(...constructParams) {
-        return this.__static.__instance(...constructParams)
-    }
-
-    static __singleton(...constructParams) {
-        return this.__static.__singleton(...constructParams)
-    }
-
-    static __magic(strict = true) {
-        this.___magic = magic(this, strict)
-        return this
-    }
+    throw new TypeError('The [target] parameter must be a function or an object.')
 }
