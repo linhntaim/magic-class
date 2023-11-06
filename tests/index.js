@@ -2,14 +2,13 @@ import chai from 'chai'
 import mocha from 'mocha'
 import magic from '../src'
 
-const before = mocha.after
-const beforeEach = mocha.beforeEach
-const after = mocha.after
-const afterEach = mocha.afterEach
+// const before = mocha.after
+// const beforeEach = mocha.beforeEach
+// const after = mocha.after
+// const afterEach = mocha.afterEach
 const describe = mocha.describe
 const it = mocha.it
 const expect = chai.expect
-chai.should()
 
 describe('magic-class', function () {
     // before(() => {
@@ -1367,6 +1366,153 @@ describe('magic-class', function () {
             expect(magicInstance5).to.equal(magicInstance)
             const magicChain = magicInstance.normal(2)(3).callInsert(4).callPush(5).callAdd(6).callSelf('any').self.chain
             expect(magicChain).to.deep.equal([1, 'normal:2', 'invoke:3', 'callInsert:4', 'callPush:5', 'callAdd:6'])
+
+            done()
+        })
+    })
+
+    describe('Use `Symbol` as method name', function () {
+        it('magic set/has/delete', function (done) {
+            const NormalClass = class
+            {
+                magicProps = {}
+
+                constructor() {
+                }
+
+                [magic.__set](prop, value) {
+                    this.magicProps[prop] = value
+                }
+
+                [magic.__has](prop) {
+                    return prop in this.magicProps
+                }
+
+                [magic.__delete](prop) {
+                    return delete this.magicProps[prop]
+                }
+            }
+
+            const MagicClass = magic(NormalClass)
+            const magicInstance = new MagicClass
+
+            magicInstance.magic = true
+            expect(magicInstance.magicProps).to.deep.equal({
+                magic: true,
+            })
+            expect('magic' in magicInstance.magicProps).to.equal(true)
+            expect(delete magicInstance.magic).to.equal(true)
+            expect('magic' in magicInstance.magicProps).to.equal(false)
+            expect(magicInstance.magicProps).to.deep.equal({})
+
+            done()
+        })
+
+        it('method chaining >> (constructor)->(normal method)->(magic invoke)->(magic call)->(magic get)->(normal prop)', function (done) {
+            const NormalClass = class
+            {
+                chain = []
+
+                constructor(...parameters) {
+                    this.chain.push(...parameters)
+                }
+
+                normal(...parameters) {
+                    this.chain.push(...parameters.map(p => 'normal:' + p))
+                    return this
+                }
+
+                [magic.__invoke](...parameters) {
+                    this.chain.push(...parameters.map(p => 'invoke:' + p))
+                    return this
+                }
+
+                [magic.__get](prop) {
+                    if (prop.startsWith('call')) {
+                        return undefined
+                    }
+                    return this
+                }
+
+                [magic.__call](method, ...parameters) {
+                    if (['callInsert', 'callPush', 'callAdd'].includes(method)) {
+                        this.chain.push(...parameters.map(p => method + ':' + p))
+                    }
+                    return this
+                }
+            }
+
+            const MagicClass = magic(NormalClass)
+            const magicChain = (new MagicClass(1)).normal(2)(3).callInsert(4).callPush(5).callAdd(6).callSelf('any').self.chain
+            expect(magicChain).to.deep.equal([1, 'normal:2', 'invoke:3', 'callInsert:4', 'callPush:5', 'callAdd:6'])
+
+            done()
+        })
+
+        it('magic static set/has/delete', function (done) {
+            const NormalClass = class
+            {
+                static magicProps = {}
+
+                static [magic.__set](prop, value) {
+                    this.magicProps[prop] = value
+                }
+
+                static [magic.__has](prop) {
+                    return prop in this.magicProps
+                }
+
+                static [magic.__delete](prop) {
+                    return delete this.magicProps[prop]
+                }
+            }
+
+            const MagicClass = magic(NormalClass)
+
+            MagicClass.magic = true
+            expect(MagicClass.magicProps).to.deep.equal({
+                magic: true,
+            })
+            expect('magic' in MagicClass.magicProps).to.equal(true)
+            expect(delete MagicClass.magic).to.equal(true)
+            expect('magic' in MagicClass.magicProps).to.equal(false)
+            expect(MagicClass.magicProps).to.deep.equal({})
+
+            done()
+        })
+
+        it('static method chaining >> (static)->(magic call)->(normal method)->(magic get)->(normal prop)', function (done) {
+            const NormalClass = class
+            {
+                static chain = []
+
+                static {
+                    this.chain.push(1)
+                }
+
+                static normal(...parameters) {
+                    this.chain.push(...parameters.map(p => 'normal:' + p))
+                    return this
+                }
+
+                static [magic.__get](prop) {
+                    if (prop.startsWith('call')) {
+                        return undefined
+                    }
+                    return this
+                }
+
+                static [magic.__call](method, ...parameters) {
+                    if (['callInsert', 'callPush', 'callAdd'].includes(method)) {
+                        this.chain.push(...parameters.map(p => method + ':' + p))
+                    }
+                    return this
+                }
+            }
+
+            const MagicClass = magic(NormalClass)
+            const magicChain = MagicClass.callInsert(2).callPush(3).callAdd(4).callSelf('any').normal(5).self.chain
+            expect(magicChain).to.deep.equal([1, 'callInsert:2', 'callPush:3', 'callAdd:4', 'normal:5'])
 
             done()
         })

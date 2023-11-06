@@ -13,7 +13,7 @@ function magicInstance(instance, strict) {
                 return Reflect.set(instance, p, newValue, instanceProxy)
             }
 
-            const setter = Reflect.get(instance, '__set')
+            const setter = Reflect.get(instance, magic.__set) || Reflect.get(instance, '__set')
             if (typeof setter === 'function') {
                 return Reflect.apply(setter, instanceProxy, [p, newValue]) ?? true
             }
@@ -28,7 +28,7 @@ function magicInstance(instance, strict) {
                 return Reflect.get(instance, p, instanceProxy)
             }
 
-            const getter = Reflect.get(instance, '__get')
+            const getter = Reflect.get(instance, magic.__get) || Reflect.get(instance, '__get')
             if (typeof getter === 'function') {
                 const value = Reflect.apply(getter, instanceProxy, [p])
                 if (value !== undefined) {
@@ -36,7 +36,7 @@ function magicInstance(instance, strict) {
                 }
             }
 
-            const caller = Reflect.get(instance, '__call')
+            const caller = Reflect.get(instance, magic.__call) || Reflect.get(instance, '__call')
             if (typeof caller === 'function') {
                 return function (...parameters) {
                     parameters.unshift(p)
@@ -54,7 +54,7 @@ function magicInstance(instance, strict) {
                 return true
             }
 
-            const has = Reflect.get(instance, '__has')
+            const has = Reflect.get(instance, magic.__has) || Reflect.get(instance, '__has')
             if (typeof has === 'function') {
                 return Reflect.apply(has, instanceProxy, [p]) ?? false
             }
@@ -69,7 +69,7 @@ function magicInstance(instance, strict) {
                 return Reflect.deleteProperty(instance, p)
             }
 
-            const deleter = Reflect.get(instance, '__delete')
+            const deleter = Reflect.get(instance, magic.__delete) || Reflect.get(instance, '__delete')
             if (typeof deleter === 'function') {
                 return Reflect.apply(deleter, instanceProxy, [p]) ?? true
             }
@@ -99,7 +99,7 @@ function magicInstance(instance, strict) {
         },
     }
 
-    const invoke = Reflect.get(instance, '__invoke')
+    const invoke = Reflect.get(instance, magic.__invoke) || Reflect.get(instance, '__invoke')
 
     return instanceProxy = typeof invoke === 'function'
         ? new Proxy(invoke, {
@@ -147,7 +147,7 @@ function magicClass(Class, strict) {
                 return Reflect.set(Class, p, newValue, ClassProxy)
             }
 
-            const setter = Reflect.get(Class, '__set')
+            const setter = Reflect.get(Class, magic.__set) || Reflect.get(Class, '__set')
             if (typeof setter === 'function') {
                 return Reflect.apply(setter, ClassProxy, [p, newValue]) ?? true
             }
@@ -168,7 +168,7 @@ function magicClass(Class, strict) {
                         return Reflect.get(Class, p, ClassProxy)
                     }
 
-                    const getter = Reflect.get(Class, '__get')
+                    const getter = Reflect.get(Class, magic.__get) || Reflect.get(Class, '__get')
                     if (typeof getter === 'function') {
                         const value = Reflect.apply(getter, ClassProxy, [p])
                         if (value !== undefined) {
@@ -176,7 +176,7 @@ function magicClass(Class, strict) {
                         }
                     }
 
-                    const caller = Reflect.get(Class, '__call')
+                    const caller = Reflect.get(Class, magic.__call) || Reflect.get(Class, '__call')
                     if (typeof caller === 'function') {
                         return function (...parameters) {
                             parameters.unshift(p)
@@ -199,7 +199,7 @@ function magicClass(Class, strict) {
                 return true
             }
 
-            const has = Reflect.get(Class, '__has')
+            const has = Reflect.get(Class, magic.__has) || Reflect.get(Class, '__has')
             if (typeof has === 'function') {
                 return Reflect.apply(has, ClassProxy, [p]) ?? false
             }
@@ -218,7 +218,7 @@ function magicClass(Class, strict) {
                 throw new TypeError(`Cannot delete static property [${p}].`)
             }
 
-            const deleter = Reflect.get(Class, '__delete')
+            const deleter = Reflect.get(Class, magic.__delete) || Reflect.get(Class, '__delete')
             if (typeof deleter === 'function') {
                 return Reflect.apply(deleter, ClassProxy, [p]) ?? true
             }
@@ -249,7 +249,7 @@ function magicClass(Class, strict) {
     })
 }
 
-export default function magic(target, strict = true) {
+function magic(target, strict = true) {
     if (typeof target === 'function') {
         return magicClass(target, strict)
     }
@@ -258,3 +258,12 @@ export default function magic(target, strict = true) {
     }
     throw new TypeError('The [target] parameter must be a function or an object.')
 }
+
+magic.__set = Symbol('Symbol.__set')
+magic.__get = Symbol('Symbol.__get')
+magic.__call = Symbol('Symbol.__call')
+magic.__has = Symbol('Symbol.__has')
+magic.__delete = Symbol('Symbol.__delete')
+magic.__invoke = Symbol('Symbol.__invoke')
+
+export default magic

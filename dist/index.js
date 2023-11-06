@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports["default"] = magic;
+exports["default"] = void 0;
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -23,7 +23,7 @@ function magicInstance(instance, strict) {
       if (Reflect.has(instance, p)) {
         return Reflect.set(instance, p, newValue, instanceProxy);
       }
-      var setter = Reflect.get(instance, '__set');
+      var setter = Reflect.get(instance, magic.__set) || Reflect.get(instance, '__set');
       if (typeof setter === 'function') {
         var _Reflect$apply;
         return (_Reflect$apply = Reflect.apply(setter, instanceProxy, [p, newValue])) !== null && _Reflect$apply !== void 0 ? _Reflect$apply : true;
@@ -37,14 +37,14 @@ function magicInstance(instance, strict) {
       if (Reflect.has(instance, p)) {
         return Reflect.get(instance, p, instanceProxy);
       }
-      var getter = Reflect.get(instance, '__get');
+      var getter = Reflect.get(instance, magic.__get) || Reflect.get(instance, '__get');
       if (typeof getter === 'function') {
         var value = Reflect.apply(getter, instanceProxy, [p]);
         if (value !== undefined) {
           return value;
         }
       }
-      var caller = Reflect.get(instance, '__call');
+      var caller = Reflect.get(instance, magic.__call) || Reflect.get(instance, '__call');
       if (typeof caller === 'function') {
         return function () {
           for (var _len = arguments.length, parameters = new Array(_len), _key = 0; _key < _len; _key++) {
@@ -63,7 +63,7 @@ function magicInstance(instance, strict) {
       if (Reflect.has(instance, p)) {
         return true;
       }
-      var has = Reflect.get(instance, '__has');
+      var has = Reflect.get(instance, magic.__has) || Reflect.get(instance, '__has');
       if (typeof has === 'function') {
         var _Reflect$apply2;
         return (_Reflect$apply2 = Reflect.apply(has, instanceProxy, [p])) !== null && _Reflect$apply2 !== void 0 ? _Reflect$apply2 : false;
@@ -77,7 +77,7 @@ function magicInstance(instance, strict) {
         }
         return Reflect.deleteProperty(instance, p);
       }
-      var deleter = Reflect.get(instance, '__delete');
+      var deleter = Reflect.get(instance, magic.__delete) || Reflect.get(instance, '__delete');
       if (typeof deleter === 'function') {
         var _Reflect$apply3;
         return (_Reflect$apply3 = Reflect.apply(deleter, instanceProxy, [p])) !== null && _Reflect$apply3 !== void 0 ? _Reflect$apply3 : true;
@@ -106,7 +106,7 @@ function magicInstance(instance, strict) {
       return Reflect.isExtensible(instance);
     }
   };
-  var invoke = Reflect.get(instance, '__invoke');
+  var invoke = Reflect.get(instance, magic.__invoke) || Reflect.get(instance, '__invoke');
   return instanceProxy = typeof invoke === 'function' ? new Proxy(invoke, _objectSpread({
     apply: function apply(target, thisArg, argArray) {
       return Reflect.apply(invoke, instanceProxy, argArray);
@@ -149,7 +149,7 @@ function magicClass(Class, strict) {
       if (Reflect.has(Class, p)) {
         return Reflect.set(Class, p, newValue, ClassProxy);
       }
-      var setter = Reflect.get(Class, '__set');
+      var setter = Reflect.get(Class, magic.__set) || Reflect.get(Class, '__set');
       if (typeof setter === 'function') {
         var _Reflect$apply4;
         return (_Reflect$apply4 = Reflect.apply(setter, ClassProxy, [p, newValue])) !== null && _Reflect$apply4 !== void 0 ? _Reflect$apply4 : true;
@@ -173,14 +173,14 @@ function magicClass(Class, strict) {
           if (Reflect.has(Class, p)) {
             return Reflect.get(Class, p, ClassProxy);
           }
-          var getter = Reflect.get(Class, '__get');
+          var getter = Reflect.get(Class, magic.__get) || Reflect.get(Class, '__get');
           if (typeof getter === 'function') {
             var value = Reflect.apply(getter, ClassProxy, [p]);
             if (value !== undefined) {
               return value;
             }
           }
-          var caller = Reflect.get(Class, '__call');
+          var caller = Reflect.get(Class, magic.__call) || Reflect.get(Class, '__call');
           if (typeof caller === 'function') {
             return function () {
               for (var _len3 = arguments.length, parameters = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
@@ -203,7 +203,7 @@ function magicClass(Class, strict) {
       if (['__instance', '__singleton'].includes(p)) {
         return true;
       }
-      var has = Reflect.get(Class, '__has');
+      var has = Reflect.get(Class, magic.__has) || Reflect.get(Class, '__has');
       if (typeof has === 'function') {
         var _Reflect$apply5;
         return (_Reflect$apply5 = Reflect.apply(has, ClassProxy, [p])) !== null && _Reflect$apply5 !== void 0 ? _Reflect$apply5 : false;
@@ -220,7 +220,7 @@ function magicClass(Class, strict) {
       if (['__instance', '__singleton'].includes(p)) {
         throw new TypeError("Cannot delete static property [".concat(p, "]."));
       }
-      var deleter = Reflect.get(Class, '__delete');
+      var deleter = Reflect.get(Class, magic.__delete) || Reflect.get(Class, '__delete');
       if (typeof deleter === 'function') {
         var _Reflect$apply6;
         return (_Reflect$apply6 = Reflect.apply(deleter, ClassProxy, [p])) !== null && _Reflect$apply6 !== void 0 ? _Reflect$apply6 : true;
@@ -260,4 +260,11 @@ function magic(target) {
   }
   throw new TypeError('The [target] parameter must be a function or an object.');
 }
+magic.__set = Symbol('Symbol.__set');
+magic.__get = Symbol('Symbol.__get');
+magic.__call = Symbol('Symbol.__call');
+magic.__has = Symbol('Symbol.__has');
+magic.__delete = Symbol('Symbol.__delete');
+magic.__invoke = Symbol('Symbol.__invoke');
+var _default = exports["default"] = magic;
 module.exports = exports.default;
