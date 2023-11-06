@@ -2,14 +2,13 @@ import chai from 'chai'
 import mocha from 'mocha'
 import magic from '../src'
 
-const before = mocha.after
-const beforeEach = mocha.beforeEach
-const after = mocha.after
-const afterEach = mocha.afterEach
+// const before = mocha.after
+// const beforeEach = mocha.beforeEach
+// const after = mocha.after
+// const afterEach = mocha.afterEach
 const describe = mocha.describe
 const it = mocha.it
 const expect = chai.expect
-chai.should()
 
 describe('magic-class', function () {
     // before(() => {
