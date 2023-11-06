@@ -27,6 +27,7 @@ Activate PHP-like magic methods in Javascript classes and instances.
         - [Static `__has`](#static-__has)
         - [Static `__delete`](#static-__delete)
         - [Static method chaining](#static-method-chaining)
+    - [Use `Symbol` as magic method name](#use-symbol-as-magic-method-name)
     - [Prototype operations](#prototype-operations)
     - [Strict mode](#strict-mode)
     - [Special magic static methods](#special-magic-static-methods)
@@ -71,6 +72,14 @@ class NormalClass
         return {method: `static:${method}`, parameters}
     }
 
+    static __has(prop) {
+        return `static:${prop}` in this.magicProps
+    }
+
+    static __delete(prop) {
+        return delete this.magicProps[`static:${prop}`]
+    }
+
     magicProps = {}
 
     constructor(normal) {
@@ -95,6 +104,14 @@ class NormalClass
         return {method, parameters}
     }
 
+    __has(prop) {
+        return prop in this.magicProps
+    }
+
+    __delete(prop) {
+        return delete this.magicProps[prop]
+    }
+
     __invoke(...parameters) {
         return {parameters}
     }
@@ -110,6 +127,11 @@ console.log(MagicClass.magic)               // (boolean) true
 console.log(MagicClass.any)                 // (string) 'static:any'
 // magic static __call
 console.log(MagicClass.callAny(true))       // (object) {method: 'static:callAny', parameters: [true]}
+// magic static __has
+console.log('magic' in MagicClass)          // (boolean) true
+// magic static __delete
+console.log(delete MagicClass.magic)        // (boolean) true
+console.log('magic' in MagicClass)          // (boolean) false
 
 // Create magic instance
 const magicInstance = new MagicClass('normal')
@@ -123,6 +145,11 @@ console.log(magicInstance.magic)            // (boolean) true
 console.log(magicInstance.any)              // (string) 'any'
 // magic __call
 console.log(magicInstance.callAny(true))    // (object) {method: 'callAny', parameters: [true]}
+// magic __has
+console.log('magic' in magicInstance)       // (boolean) true
+// magic __delete
+console.log(delete magicInstance.magic)     // (boolean) true
+console.log('magic' in magicInstance)       // (boolean) false
 // magic __invoke
 console.log(magicInstance(true))            // (object) {parameters: [true]}
 ```
@@ -733,6 +760,162 @@ const magicChain = MagicClass.push(1).callInsert(2).callAdd(3).callAny(4).any.se
 console.log(magicChain) // (array) [0, 1, 'callInsert:2', 'callAdd:3', 'call:callAny', 'get:any']
 ```
 
+### Use `Symbol` as magic method name
+
+Besides strings, there are defined symbols you can use to naming the magic methods:
+
+```javascript
+const magic = require('magic-class')
+/* or ES6 */
+// import magic from 'magic-class'
+
+// Defined symbols
+console.log(magic.__set)                    // (symbol) Symbol(Symbol.__set)
+console.log(magic.__get)                    // (symbol) Symbol(Symbol.__get)
+console.log(magic.__call)                   // (symbol) Symbol(Symbol.__call)
+console.log(magic.__has)                    // (symbol) Symbol(Symbol.__has)
+console.log(magic.__delete)                 // (symbol) Symbol(Symbol.__delete)
+console.log(magic.__invoke)                 // (symbol) Symbol(Symbol.__invoke)
+
+class NormalClass
+{
+    static magicProps = {}
+
+    // equivalent to `static __set`
+    static [magic.__set](prop, value) {
+        this.magicProps[`static:${prop}`] = value
+    }
+
+    // equivalent to `static __get`
+    static [magic.__get](prop) {
+        if (`static:${prop}` in this.magicProps) {
+            return this.magicProps[`static:${prop}`]
+        }
+        if (prop.startsWith('call')) {
+            return undefined
+        }
+        return `static:${prop}`
+    }
+
+    // equivalent to `static __call`
+    static [magic.__call](method, ...parameters) {
+        return {method: `static:${method}`, parameters}
+    }
+
+    // equivalent to `static __has`
+    static [magic.__has](prop) {
+        return `static:${prop}` in this.magicProps
+    }
+
+    // equivalent to `static __delete`
+    static [magic.__delete](prop) {
+        return delete this.magicProps[`static:${prop}`]
+    }
+
+    magicProps = {}
+
+    constructor(normal) {
+        this.normal = normal
+    }
+
+    // equivalent to `__set`
+    [magic.__set](prop, value) {
+        this.magicProps[prop] = value
+    }
+
+    // equivalent to `__get`
+    [magic.__get](prop) {
+        if (prop in this.magicProps) {
+            return this.magicProps[prop]
+        }
+        if (prop.startsWith('call')) {
+            return undefined
+        }
+        return prop
+    }
+
+    // equivalent to `__call`
+    [magic.__call](method, ...parameters) {
+        return {method, parameters}
+    }
+
+    // equivalent to `__has`
+    [magic.__has](prop) {
+        return prop in this.magicProps
+    }
+
+    // equivalent to `__delete`
+    [magic.__delete](prop) {
+        return delete this.magicProps[prop]
+    }
+
+    // equivalent to `__invoke`
+    [magic.__invoke](...parameters) {
+        return {parameters}
+    }
+}
+
+// Create magic class
+const MagicClass = magic(NormalClass)
+// magic static __set
+MagicClass.magic = true
+console.log(MagicClass.magicProps)          // (object) {'static:magic': true}
+// magic static __get
+console.log(MagicClass.magic)               // (boolean) true
+console.log(MagicClass.any)                 // (string) 'static:any'
+// magic static __call
+console.log(MagicClass.callAny(true))       // (object) {method: 'static:callAny', parameters: [true]}
+// magic static __has
+console.log('magic' in MagicClass)          // (boolean) true
+// magic static __delete
+console.log(delete MagicClass.magic)        // (boolean) true
+console.log('magic' in MagicClass)          // (boolean) false
+
+// Create magic instance
+const magicInstance = new MagicClass('normal')
+/* or */
+// const magicInstance = magic(new NormalClass())
+// magic __set
+magicInstance.magic = true
+console.log(magicInstance.magicProps)       // (object) {magic: true}
+// magic __get
+console.log(magicInstance.magic)            // (boolean) true
+console.log(magicInstance.any)              // (string) 'any'
+// magic __call
+console.log(magicInstance.callAny(true))    // (object) {method: 'callAny', parameters: [true]}
+// magic __has
+console.log('magic' in magicInstance)       // (boolean) true
+// magic __delete
+console.log(delete magicInstance.magic)     // (boolean) true
+console.log('magic' in magicInstance)       // (boolean) false
+// magic __invoke
+console.log(magicInstance(true))            // (object) {parameters: [true]}
+```
+
+***Note*: The `Symbol`-naming magic method has a higher priority in calling
+than the `string`-naming one.
+
+```javascript
+const magic = require('magic-class')
+/* or ES6 */
+// import magic from 'magic-class'
+
+class NormalClass
+{
+    // equivalent to `__get` but has a higher priority
+    [magic.__get](prop) {
+        return `symbol:${prop}`
+    }
+
+    __get(prop) {
+        return prop
+    }
+}
+
+const magicInstance = magic(new NormalClass())
+console.log(magicInstance.magic) // (string) 'symbol:magic'
+```
+
 ### Prototype operations
 
 Technically, **the class after the magic is activated (which is a proxy object)** is different from
@@ -794,6 +977,9 @@ console.log(magicInstance instanceof GrandParentClass)          // (boolean) tru
 // Magic!
 console.log(magicInstance.value)                                // (string) 'value'
 ```
+
+***Note*: Operation by `setPrototypeOf` method is not allowed. Trying to apply it
+to magic classes or instances will throw `TypeError` exception.
 
 ### Strict mode
 
